@@ -1,6 +1,7 @@
 import React, { Component, PureComponent } from 'react';
 import 'react-virtualized/styles.css';
 import { AutoSizer, List, WindowScroller } from 'react-virtualized';
+import { pure } from 'recompose';
 import logo from './logo.svg';
 import './App.css';
 
@@ -26,6 +27,7 @@ class App extends Component {
 		withBind: false,
 		withPure: false,
 		withCheats: false,
+		withFunctionCall: false
 	};
 
 	componentWillUpdate() {
@@ -102,6 +104,15 @@ class App extends Component {
 					<button
 						onClick={() =>
 							this.setState(state => ({
+								withFunctionCall: !state.withFunctionCall
+							}))
+						}
+					>
+						Toggle with function call: ({JSON.stringify(this.state.withFunctionCall)})
+					</button>
+					<button
+						onClick={() =>
+							this.setState(state => ({
 								withCheats: !state.withCheats
 							}))
 						}
@@ -134,7 +145,13 @@ class App extends Component {
 					<div className="rows">
 						{this.state.someItems.map(
 							item =>
-								this.state.withBind ? (
+								this.state.withFunctionCall ? (
+									<div className="row" key={item.id}>
+										{Item({ contents: item.a, onClick: this.addItem })}
+										{Item({ contents: item.b, onClick: this.addItem })}
+										{Item({ contents: item.c, onClick: this.addItem })}
+									</div>
+								) : this.state.withBind ? (
 									<div className="row" key={item.id}>
 										<this.RenderItem
 											contents={item.a}
@@ -164,13 +181,21 @@ class App extends Component {
 	}
 }
 
-function Item(props) {
-	return <div className="item">{JSON.stringify(props.contents)}</div>;
-}
+const Item = props => {
+	return (
+		<div onClick={props.onClick} className="item">
+			{JSON.stringify(props.contents)}
+		</div>
+	);
+};
 
 class ItemPure extends PureComponent {
 	render() {
-		return <div className="item">{JSON.stringify(this.props.contents)}</div>;
+		return (
+			<div onClick={this.props.onClick} className="item">
+				{JSON.stringify(this.props.contents)}
+			</div>
+		);
 	}
 }
 
