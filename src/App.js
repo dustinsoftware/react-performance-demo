@@ -1,76 +1,46 @@
 import React, { Component, PureComponent } from 'react';
 import 'react-virtualized/styles.css';
 import { AutoSizer, List, WindowScroller } from 'react-virtualized';
-import { pure } from 'recompose';
 import logo from './logo.svg';
 import './App.css';
+import { PureEmoji, FastEmoji, Emoji } from './demos/emoji';
+import { generateItem, generateItems } from './utils';
 
 const Profiler = React.unstable_Profiler;
-
-let uniqueId = 0;
-
-function generateItems() {
-  let arr = [];
-  for (let i = 0; i < 1000; i++) {
-    arr.push({
-      id: uniqueId++,
-      a: Math.random(),
-      b: Math.random(),
-      c: Math.random(),
-    });
-  }
-
-  return arr;
-}
 
 class App extends Component {
   state = {
     someItems: generateItems(),
+    renderMode: '',
     withBind: false,
     withPure: false,
     withCheats: false,
     withFunctionCall: false,
   };
 
-  componentDidUpdate() {
-    if (this.renderStart) {
-      document.querySelector('#perf-title').innerText =
-        new Date().getTime() - this.renderStart.getTime();
-      this.renderStart = null;
-    }
-  }
-
   addItem = () => {
     this.setState({
-      someItems: [
-        {
-          id: uniqueId++,
-          a: Math.random(),
-          b: Math.random(),
-          c: Math.random(),
-        },
-        ...this.state.someItems,
-      ],
+      someItems: [generateItem(), ...this.state.someItems],
     });
   };
-
-  RenderItem = props =>
-    this.state.withPure ? <ItemPure {...props} /> : <Item {...props} />;
 
   rowRenderer = ({ index, key, style }) => {
     const item = this.state.someItems[index];
     return (
       <div className="row" key={key} style={style}>
-        <this.RenderItem contents={item.a} onClick={() => this.addItem()} />
-        <this.RenderItem contents={item.b} onClick={() => this.addItem()} />
-        <this.RenderItem contents={item.c} onClick={() => this.addItem()} />
+        <Item renderMode={this.state.renderMode} contents={item.a} onClick={() => this.addItem()} />
+        <Item renderMode={this.state.renderMode} contents={item.b} onClick={() => this.addItem()} />
+        <Item renderMode={this.state.renderMode} contents={item.c} onClick={() => this.addItem()} />
       </div>
     );
-	};
+  };
 
-	updateTimings = (id, currentPhase, actualTime) => {
-		document.querySelector('#perf-title').innerText = JSON.stringify(actualTime, 2);
-	}
+  updateTimings = (id, currentPhase, actualTime) => {
+    document.querySelector('#perf-title').innerText = JSON.stringify(
+      Math.round(actualTime),
+      2,
+    );
+  };
 
   render() {
     return (
@@ -86,14 +56,35 @@ class App extends Component {
             <h1 id="perf-title" className="App-title">
               Perf Demo
             </h1>
+          </header>
+          <div>
             <button
               onClick={() =>
                 this.setState(state => ({
-                  withPure: !state.withPure,
+                  renderMode: '',
                 }))
               }
             >
-              Toggle pure: ({JSON.stringify(this.state.withPure)})
+              Toggle normal: ({JSON.stringify(this.state.renderMode === '')})
+            </button>
+            <button
+              onClick={() =>
+                this.setState(state => ({
+                  renderMode: 'fast',
+                }))
+              }
+            >
+              Toggle with function call: (
+              {JSON.stringify(this.state.renderMode === 'fast')})
+            </button>
+            <button
+              onClick={() =>
+                this.setState(state => ({
+                  renderMode: 'pure',
+                }))
+              }
+            >
+              Toggle pure: ({JSON.stringify(this.state.renderMode === 'pure')})
             </button>
             <button
               onClick={() =>
@@ -107,16 +98,6 @@ class App extends Component {
             <button
               onClick={() =>
                 this.setState(state => ({
-                  withFunctionCall: !state.withFunctionCall,
-                }))
-              }
-            >
-              Toggle with function call: (
-              {JSON.stringify(this.state.withFunctionCall)})
-            </button>
-            <button
-              onClick={() =>
-                this.setState(state => ({
                   withCheats: !state.withCheats,
                 }))
               }
@@ -124,7 +105,7 @@ class App extends Component {
               Enable cheats: ({JSON.stringify(this.state.withCheats)})
             </button>
             <button onClick={this.addItem}>Add item</button>
-          </header>
+          </div>
           {this.state.withCheats ? (
             <WindowScroller scrollElement={window}>
               {({ height, onChildScroll, scrollTop, isScrolling }) => (
@@ -149,40 +130,40 @@ class App extends Component {
             <div className="rows">
               {this.state.someItems.map(
                 item =>
-                  this.state.withFunctionCall ? (
+                  this.state.withBind ? (
                     <div className="row" key={item.id}>
-                      {Item({ contents: item.a, onClick: this.addItem })}
-                      {Item({ contents: item.b, onClick: this.addItem })}
-                      {Item({ contents: item.c, onClick: this.addItem })}
-                    </div>
-                  ) : this.state.withBind ? (
-                    <div className="row" key={item.id}>
-                      <this.RenderItem
+                      <Item
                         contents={item.a}
                         onClick={() => this.addItem()}
+                        renderMode={this.state.renderMode}
                       />
-                      <this.RenderItem
+                      <Item
                         contents={item.b}
                         onClick={() => this.addItem()}
+                        renderMode={this.state.renderMode}
                       />
-                      <this.RenderItem
+                      <Item
                         contents={item.c}
                         onClick={() => this.addItem()}
+                        renderMode={this.state.renderMode}
                       />
                     </div>
                   ) : (
                     <div className="row" key={item.id}>
-                      <this.RenderItem
+                      <Item
                         contents={item.a}
                         onClick={this.addItem}
+                        renderMode={this.state.renderMode}
                       />
-                      <this.RenderItem
+                      <Item
                         contents={item.b}
                         onClick={this.addItem}
+                        renderMode={this.state.renderMode}
                       />
-                      <this.RenderItem
+                      <Item
                         contents={item.c}
                         onClick={this.addItem}
+                        renderMode={this.state.renderMode}
                       />
                     </div>
                   ),
@@ -197,20 +178,17 @@ class App extends Component {
 
 const Item = props => {
   return (
-    <div onClick={props.onClick} className="item">
+    <div className="item">
       {JSON.stringify(props.contents)}
+      {props.renderMode === 'pure' ? (
+        <PureEmoji onClick={props.onClick} count={10} />
+      ) : props.renderMode === 'fast' ? (
+        <FastEmoji onClick={props.onClick} count={10} />
+      ) : (
+        <Emoji onClick={props.onClick} count={10} />
+      )}
     </div>
   );
 };
-
-class ItemPure extends PureComponent {
-  render() {
-    return (
-      <div onClick={this.props.onClick} className="item">
-        {JSON.stringify(this.props.contents)}
-      </div>
-    );
-  }
-}
 
 export default App;
